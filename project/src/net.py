@@ -2,9 +2,9 @@ from torch import nn
 import torch
 
 
-linear_net = nn.Sequential(nn.Linear(27, 150),
+linear_net = nn.Sequential(nn.Linear(27, 200),
                     nn.ReLU(),
-                    nn.Linear(150, 3))
+                    nn.Linear(200, 3))
 
 
 def rmse(output, target):

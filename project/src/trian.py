@@ -15,7 +15,7 @@ with open("train_data.pkl", "rb") as f:
 net = linear_net
 loss_fn = nn.MSELoss()
 lr = 0.001
-max_epochs = 25
+max_epochs = 50
 optimizer = optim.SGD(net.parameters(), lr=lr)
 
 
@@ -47,7 +47,7 @@ def trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs, device):
 
         print('acc : %.4f' % (metric[3]/metric[2]))
         animator.add(epoch+1, [metric[1]/metric[0], metric[3]/metric[2]])
-    torch.save(net.state_dict(), "../models/params.pkl")
+    torch.save(net.state_dict(), "params.pkl")
     plt.savefig(fname="../models/loss.jpg")
 
 
