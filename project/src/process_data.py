@@ -6,7 +6,7 @@ import numpy as np
 import pickle
 
 
-def load_data(steps: list, batch_size=32, time_steps=15, jump=False):
+def load_time_data(steps: list, batch_size=32, time_steps=15, jump=False):
     data = pd.read_csv('../../data/202309221011205597/train_data.csv')
     n_train = len(data)
     pre_data = pd.read_csv('../../data/202309221011205597/dev_data.csv')
@@ -38,11 +38,13 @@ def load_data(steps: list, batch_size=32, time_steps=15, jump=False):
     train_data = data[:n_train - max_step]
     valid_data = data.drop(columns=label_names)[n_train:]   # 将label列删除，生成验证集
 
-    # 产生时间步
     train_data = np.array(train_data)
     valid_data = np.array(valid_data)
+
+    # 产生时间步
     train_data = get_time_steps(train_data, num_steps=time_steps, jump=jump)
     valid_data = get_time_steps(valid_data, num_steps=time_steps, jump=True)
+    valid_data = torch.tensor(valid_data, dtype=torch.float32)
 
     # 划分训练集和测试集
     X_data = train_data[:, :, :-len(label_names)]
@@ -58,8 +60,10 @@ def load_data(steps: list, batch_size=32, time_steps=15, jump=False):
     train_iter = DataLoader(train_datasets, batch_size=batch_size, shuffle=True)
     test_iter = DataLoader(test_datasets, batch_size=batch_size, shuffle=True)
 
-    with open("data.pkl", "wb") as f:
-        pickle.dump((train_iter, test_iter, valid_data), f)
+    with open("train_data.pkl", "wb") as f:
+        pickle.dump((train_iter, test_iter), f)
+    with open("valid_data.pkl", "wb") as f:
+        pickle.dump(valid_data, f)
 
     return train_iter, test_iter, valid_data
 
@@ -178,6 +182,6 @@ def load_linear_data(steps: list, batch_size=32, time_steps=15, jump=False):
 
 # steps = [15, 30, 60, 240, 1440]
 steps = [15, 30, 60]
-train_iter, test_iter, valid_data = load_linear_data(steps=steps, batch_size=256)
-print(next(iter(train_iter))[0].shape)
+train_iter, test_iter, valid_data = load_time_data(steps=steps, batch_size=256)
+print(next(iter(train_iter))[1].shape)
 

@@ -1,5 +1,5 @@
 from torch import nn, optim
-from net import linear_net, rmse
+from net import linear_net, LSTMWithLinear
 import torch
 from d2l import torch as d2l
 import matplotlib.pyplot as plt
@@ -12,11 +12,12 @@ device = d2l.try_gpu()
 with open("train_data.pkl", "rb") as f:
     train_iter, test_iter = pickle.load(f)
 
-net = linear_net
+# net = linear_net
+net = LSTMWithLinear(26, 150, 1, 3)
 loss_fn = nn.MSELoss()
 lr = 0.001
 max_epochs = 50
-optimizer = optim.SGD(net.parameters(), lr=lr)
+optimizer = optim.Adam(net.parameters(), lr=lr)
 
 
 def trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs, device):
@@ -32,6 +33,7 @@ def trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs, device):
             loss = loss_fn(output, Y).mean()
             optimizer.zero_grad()
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(net.parameters(), 1)
             optimizer.step()
             metric.add(1, loss, 0, 0)
             print('| epoch %d | iter %d | loss %.4f |' % (epoch+1, iter, metric[1]/metric[0]))
@@ -52,4 +54,3 @@ def trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs, device):
 
 
 trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs=max_epochs, device=device)
-
