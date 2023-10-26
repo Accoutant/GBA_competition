@@ -13,8 +13,8 @@ def load_data(steps: list, batch_size=32, time_steps=15, jump=False):
     data = pd.concat([data, pre_data], axis=0)    # 将预测数据和训练数据合并，从而进行归一化
     data.fillna(0, inplace=True)
     data.reset_index(inplace=True)
-    data.drop(columns=['index', '大气压', '风速', '风向', '平均风向', '阵风向', '降雨量', '辐照度_POA', '无功功率',
-                       '当天峰值有功功率', '累计发电量'], inplace=True)
+    data.drop(columns=['index', '大气压', '风速', '风向', '平均风速', '平均风向', '阵风速', '阵风向', '降雨量', '辐照度_POA', '无功功率',
+                       '累计发电量'], inplace=True)
 
     data['time'] = data['时间'].apply(lambda x: pd.Timestamp(x))
     data['月'] = data['time'].apply(lambda x: x.month)
@@ -126,8 +126,8 @@ def load_linear_data(steps: list, batch_size=32, time_steps=15, jump=False):
     data = pd.concat([data, pre_data], axis=0)    # 将预测数据和训练数据合并，从而进行归一化
     data.fillna(0, inplace=True)
     data.reset_index(inplace=True)
-    data.drop(columns=['index', '大气压', '风速', '风向', '平均风向', '阵风向', '降雨量', '辐照度_POA', '无功功率',
-                       '当天峰值有功功率', '累计发电量'], inplace=True)
+    data.drop(columns=['index', '大气压', '风速', '风向', '平均风速', '平均风向', '阵风速', '阵风向', '降雨量', '辐照度_POA', '无功功率',
+                       '累计发电量'], inplace=True)
 
     data['time'] = data['时间'].apply(lambda x: pd.Timestamp(x))
     data['月'] = data['time'].apply(lambda x: x.month)
@@ -179,4 +179,5 @@ def load_linear_data(steps: list, batch_size=32, time_steps=15, jump=False):
 # steps = [15, 30, 60, 240, 1440]
 steps = [15, 30, 60]
 train_iter, test_iter, valid_data = load_linear_data(steps=steps, batch_size=256)
+print(next(iter(train_iter))[0].shape)
 

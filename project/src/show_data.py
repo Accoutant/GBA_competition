@@ -15,6 +15,7 @@ def show_heatmap(data):
     # data.drop(columns=['时间'], inplace=True)
     data.fillna(0, inplace=True)
     corr = data.corr()
+    corr.to_excel('../models/coor.xlsx')
 
     corr.fillna(0, inplace=True)
     sns.set(font='SimHei')

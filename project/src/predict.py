@@ -17,8 +17,8 @@ def predict(net, valid_data):
     valid['15min'] = output['15分']
     valid['30min'] = output['30分']
     valid['1h'] = output['60分']
-    valid['4h'] = output['240分']
-    valid['24h'] = output['1440分']
+    #valid['4h'] = output['240分']
+    #valid['24h'] = output['1440分']
     valid.to_csv("../models/predict.csv", index=None)
 
 
