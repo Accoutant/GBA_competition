@@ -12,15 +12,12 @@ linear_net = nn.Sequential(nn.Linear(26, 100),
 class LSTMWithLinear(nn.Module):
     def __init__(self, input_size, hidden_size1, hidden_size2, num_layers, out_features, dropout=0):
         super().__init__()
+        self.linear = nn.Sequential(nn.Linear(input_size, hidden_size1), nn.ReLU())
         self.lstms = nn.ModuleList()
         for i in range(out_features):
-            self.lstms.add_module("lstm"+str(i), nn.LSTM(input_size=input_size, hidden_size=hidden_size1,
+            self.lstms.add_module("lstm"+str(i), nn.LSTM(input_size=hidden_size1, hidden_size=hidden_size2,
                                                          num_layers=num_layers, batch_first=True, dropout=dropout))
-        self.affine = nn.Sequential(nn.Linear(hidden_size1, hidden_size2),
-                                    nn.BatchNorm1d(15),
-                                    nn.ReLU(),
-                                    nn.Dropout(dropout),
-                                    nn.Linear(hidden_size2, 1))
+        self.affine = nn.Linear(hidden_size2, 1)
         self.affines = nn.ModuleList()
         for i in range(out_features):
             self.affines.add_module("affine"+str(i), self.affine)
@@ -30,6 +27,7 @@ class LSTMWithLinear(nn.Module):
             affine.apply(self.init_weight)
 
     def forward(self, X):
+        X = self.linear(X)
         lstm_outputs = []
         for lstm in self.lstms:
             X1, _ = lstm(X)

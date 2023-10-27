@@ -13,7 +13,7 @@ with open("train_data.pkl", "rb") as f:
     train_iter, test_iter = pickle.load(f)
 
 # net = linear_net
-net = LSTMWithLinear(27, 32, 32, 1, 3)
+net = LSTMWithLinear(27, 64, 32, 1, 3)
 loss_fn = nn.MSELoss()
 lr = 0.001
 max_epochs = 60
