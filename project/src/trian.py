@@ -16,7 +16,7 @@ net = linear_net
 loss_fn = nn.MSELoss()
 lr = 0.001
 max_epochs = 50
-optimizer = optim.SGD(net.parameters(), lr=lr)
+optimizer = optim.Adam(net.parameters(), lr=lr)
 
 
 def trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs, device):
