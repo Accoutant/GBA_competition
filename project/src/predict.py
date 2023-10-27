@@ -4,7 +4,7 @@ import pickle
 import pandas as pd
 
 
-net = LSTMWithLinear(27, 150, 1, 3)
+net = LSTMWithLinear(27, 32, 32, 1, 3)
 # net = linear_net
 net.load_state_dict(torch.load('params.pkl'))
 with open("valid_data.pkl", "rb") as f:
