@@ -1,18 +1,20 @@
-from torch import nn
-import torch
+from sklearn.linear_model import Ridge
+import pickle
+import pandas as pd
 
+with open("train_data.pkl", "rb") as f:
+    (x_train, t_train), (x_test, t_test), valid_data = pickle.load(f)
 
-linear_net = nn.Sequential(nn.Linear(26, 100),
-                           nn.ReLU(),
-                           nn.Linear(100, 100),
-                           nn.ReLU(),
-                           nn.Linear(100, 3))
+linear = Ridge()
+linear.fit(x_train, t_train)
+print("trian score:", linear.score(x_train, t_train))
+print("test score:", linear.score(x_test, t_test))
 
+predict = pd.DataFrame(linear.predict(valid_data), columns=["15分", "30分", "60分"])
 
-def rmse(output, target):
-    n = output.shape[0]
-    loss = torch.sqrt(torch.pow((output-target)/(target + 1e-6), 2).sum()/n)
-    return loss
+with open("predict.pkl", "wb") as f:
+    pickle.dump(predict, f)
+
 
 
 
