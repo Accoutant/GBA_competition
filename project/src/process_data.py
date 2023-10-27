@@ -190,7 +190,7 @@ def load_ml_data(steps: list, batch_size=32, time_steps=15, jump=False):
     data['月'] = data['time'].apply(lambda x: x.month)
     data['日'] = data['time'].apply(lambda x: x.day)
     data['时'] = data['time'].apply(lambda x: x.hour)
-    data['分'] = data['time'].apply(lambda x: x.minute)
+    data['一天中的第几分钟'] = data['time'].apply(lambda x: x.dayofyear)
 
     data.drop(columns=['时间', '当日发电量', 'time'], inplace=True)
     data: DataFrame
