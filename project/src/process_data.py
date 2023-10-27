@@ -21,6 +21,7 @@ def load_time_data(steps: list, batch_size=32, time_steps=15, jump=False):
     data['日'] = data['time'].apply(lambda x: x.day)
     data['时'] = data['time'].apply(lambda x: x.hour)
     data['分'] = data['time'].apply(lambda x: x.minute)
+    data['一天中的第几分钟'] = data['time'].apply(lambda x: x.dayofyear)
 
     data.drop(columns=['时间', '当日发电量', 'time'], inplace=True)
     data: DataFrame
@@ -183,5 +184,5 @@ def load_linear_data(steps: list, batch_size=32, time_steps=15, jump=False):
 # steps = [15, 30, 60, 240, 1440]
 steps = [15, 30, 60]
 train_iter, test_iter, valid_data = load_time_data(steps=steps, batch_size=256)
-print(valid_data.shape)
+print(next(iter(train_iter))[0].shape)
 

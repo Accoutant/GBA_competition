@@ -13,10 +13,10 @@ with open("train_data.pkl", "rb") as f:
     train_iter, test_iter = pickle.load(f)
 
 # net = linear_net
-net = LSTMWithLinear(26, 150, 1, 3)
+net = LSTMWithLinear(27, 150, 1, 3)
 loss_fn = nn.MSELoss()
 lr = 0.001
-max_epochs = 50
+max_epochs = 70
 optimizer = optim.Adam(net.parameters(), lr=lr)
 
 
