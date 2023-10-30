@@ -49,4 +49,21 @@ def rmse(output, target):
     return loss
 
 
+class SelfAttention(nn.Module):
+    def __init__(self, embed_size, num_heads, dropout, key_size, value_size):
+        super().__init__()
+        self.attention = nn.MultiheadAttention(embed_dim=embed_size, num_heads=num_heads, dropout=dropout,
+                                               kdim=key_size, vdim=value_size, batch_first=True)
+        self.linear = nn.Linear(embed_size, 1)
+
+    def forward(self, X):
+        # X.shape: batch_size, num_steps, num_features
+        attention_output, attention_weight = self.attention(X, X, X)
+        output = self.linear(attention_output)
+        return output.squeeze(-1)
+
+
+# net = SelfAttention(27, 3, dropout=0.1, key_size=27, value_size=27)
+
+
 
