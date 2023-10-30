@@ -3,6 +3,7 @@ from sklearn.svm import LinearSVR
 import pickle
 import pandas as pd
 import numpy as np
+from sklearn.decomposition import PCA
 
 
 def use_linear(labels: list):
@@ -43,9 +44,20 @@ def use_svm(labels: list):
     return predict
 
 
-labels = ["15分", "30分", "60分"]
-predict = use_svm(labels)
+def use_pca():
+    with open("train_data.pkl", "rb") as f:
+        (x_train, t_train), (x_test, t_test), valid_data = pickle.load(f)
 
+    pca = PCA(n_components=1)
+    pca.fit(x_train)
+    x_pca = pca.transform(x_train)
+    print(pca.explained_variance_)
+    print(pca.score(x_test,t_test))
+    print(x_pca.shape)
+
+labels = ["15分", "30分", "60分"]
+# predict = use_svm(labels)
+use_pca()
 
 
 
