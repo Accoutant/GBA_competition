@@ -1,5 +1,5 @@
 from torch import nn, optim
-from net import linear_net, LSTMWithLinear, SelfAttention
+from net import linear_net, LSTMWithLinear, SelfAttention, Bertblock, Bert
 import torch
 from d2l import torch as d2l
 import matplotlib.pyplot as plt
@@ -14,7 +14,8 @@ with open("train_data.pkl", "rb") as f:
 
 # net = linear_net
 # net = LSTMWithLinear(27, 64, 32, 1, 3)
-net = SelfAttention(27, num_heads=3, dropout=0.2, key_size=27, value_size=27, output_features=3, hidden_size=32)
+# net = SelfAttention(27, num_heads=3, dropout=0.2, key_size=27, value_size=27, output_features=3, hidden_size=32)
+net = Bert(27, 32, 4, 0.1, 3, 2)
 loss_fn = nn.MSELoss()
 lr = 0.01
 max_epochs = 25
@@ -31,8 +32,6 @@ def trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs, device):
             X = X.to(device)
             Y = Y.to(device)
             output = net(X).squeeze(-1)
-            print(output.shape)
-            print(Y.shape)
             loss = loss_fn(output, Y).mean()
             optimizer.zero_grad()
             loss.backward()
