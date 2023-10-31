@@ -183,6 +183,6 @@ def load_linear_data(steps: list, batch_size=32, time_steps=15, jump=False):
 
 # steps = [15, 30, 60, 240, 1440]
 steps = [15, 30, 60]
-train_iter, test_iter, valid_data = load_time_data(steps=steps, batch_size=256)
+train_iter, test_iter, valid_data = load_time_data(steps=steps, batch_size=256, time_steps=60)
 print(next(iter(train_iter))[0].shape)
 

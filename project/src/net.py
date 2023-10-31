@@ -50,20 +50,24 @@ def rmse(output, target):
 
 
 class SelfAttention(nn.Module):
-    def __init__(self, embed_size, num_heads, dropout, key_size, value_size):
+    def __init__(self, embed_size, num_heads, dropout, key_size, value_size, output_features, hidden_size):
         super().__init__()
         self.attention = nn.MultiheadAttention(embed_dim=embed_size, num_heads=num_heads, dropout=dropout,
-                                               kdim=key_size, vdim=value_size, batch_first=True)
-        self.linear = nn.Linear(embed_size, 1)
+                                               kdim=key_size, vdim=value_size)
+        self.linear = nn.Sequential(nn.Linear(embed_size, hidden_size),
+                                    nn.ReLU(),
+                                    nn.Linear(hidden_size, output_features))
 
     def forward(self, X):
         # X.shape: batch_size, num_steps, num_features
+        X = X.permute(1, 0, 2)
         attention_output, attention_weight = self.attention(X, X, X)
+        attention_output = attention_output.permute(1, 0, 2)
         output = self.linear(attention_output)
-        return output.squeeze(-1)
+        return output
 
 
-# net = SelfAttention(27, 3, dropout=0.1, key_size=27, value_size=27)
+# net = SelfAttention(27, 3, dropout=0.1, key_size=27, value_size=27, output_features=3)
 
 
 

@@ -1,10 +1,10 @@
-from net import linear_net, LSTMWithLinear
+from net import linear_net, LSTMWithLinear, SelfAttention
 import torch
 import pickle
 import pandas as pd
 
 
-net = LSTMWithLinear(27, 64, 32, 1, 3)
+net = SelfAttention(27, num_heads=3, dropout=0.2, key_size=27, value_size=27, output_features=3, hidden_size=32)
 # net = linear_net
 net.load_state_dict(torch.load('params.pkl'))
 with open("valid_data.pkl", "rb") as f:
@@ -13,7 +13,7 @@ with open("valid_data.pkl", "rb") as f:
 
 def predict(net, valid_data):
     output = net(valid_data)
-    output = pd.DataFrame(output.detach().numpy(), columns=["15分", "30分", "60分", "240分", "1440分"])
+    output = pd.DataFrame(output.detach().numpy(), columns=["15分", "30分", "60分"])
 
     valid = pd.read_csv('../../data/202309221011205597/result_sample.csv')
     valid['15min'] = output['15分']
