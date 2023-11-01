@@ -18,7 +18,7 @@ with open("train_data.pkl", "rb") as f:
 net = Bert(27, 32, 4, 0.1, 3, 2)
 loss_fn = nn.MSELoss()
 lr = 0.01
-max_epochs = 10
+max_epochs = 15
 optimizer = optim.Adam(net.parameters(), lr=lr)
 
 

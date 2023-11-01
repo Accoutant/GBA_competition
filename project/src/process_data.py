@@ -192,5 +192,5 @@ def load_linear_data(steps: list, batch_size=32, time_steps=15, jump=False):
 
 # steps = [15, 30, 60, 240, 1440]
 steps = [15, 30, 60]
-load_time_data(steps=steps, batch_size=128, time_steps=60, jump=2)
+load_time_data(steps=steps, batch_size=128, time_steps=60, jump=False)
 
