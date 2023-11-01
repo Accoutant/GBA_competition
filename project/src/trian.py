@@ -15,10 +15,10 @@ with open("train_data.pkl", "rb") as f:
 # net = linear_net
 # net = LSTMWithLinear(27, 64, 32, 1, 3)
 # net = SelfAttention(27, num_heads=3, dropout=0.2, key_size=27, value_size=27, output_features=3, hidden_size=32)
-net = Bert(27, 32, 4, 0.1, 3, 2)
+net = Bert(27, 32, 4, 0.1, 3, 4)
 loss_fn = nn.MSELoss()
 lr = 0.01
-max_epochs = 15
+max_epochs = 10
 optimizer = optim.Adam(net.parameters(), lr=lr)
 
 
