@@ -54,7 +54,7 @@ def load_time_data(steps: list, batch_size=32, time_steps=15, jump=False):
 
     train_iter = DataLoader(train_datasets, batch_size=batch_size, shuffle=True)
     test_iter = DataLoader(test_datasets, batch_size=batch_size, shuffle=True)
-    print(next(iter(train_iter))[0].shape)
+    print("\n", next(iter(train_iter))[0].shape)
     with open("train_data.pkl", "wb") as f:
         pickle.dump((train_iter, test_iter), f)
     del train_datasets, test_datasets, train_iter, test_iter

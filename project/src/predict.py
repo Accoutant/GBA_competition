@@ -6,7 +6,7 @@ import pandas as pd
 
 # net = SelfAttention(27, num_heads=3, dropout=0.2, key_size=27, value_size=27, output_features=3, hidden_size=32)
 # net = linear_net
-net = Bert(27, 32, 4, 0.1, 3, 4)
+net = Bert(27, 15, 4, 0.1, 3, 4)
 net.load_state_dict(torch.load('params.pkl'))
 with open("valid_data.pkl", "rb") as f:
     valid_data = pickle.load(f)
