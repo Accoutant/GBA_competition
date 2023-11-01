@@ -35,24 +35,18 @@ def load_time_data(steps: list, batch_size=32, time_steps=15, jump=False):
         col_list.remove(label_name)       # 不对label列进行归一化
     data = norm_data(data, col_list)    # 对其他列进行归一化
 
-    # 划分训练集和验证集
-    train_data = data[:n_train - max_step]
-    valid_data = data.drop(columns=label_names)[n_train:]   # 将label列删除，生成验证集
-
+    # 训练集得到时间步
+    train_data = data[:n_train-max_step]
     train_data = np.array(train_data)
-    valid_data = np.array(valid_data)
-
-    # 产生时间步
     train_data = get_time_steps(train_data, num_steps=time_steps, jump=jump)
-    valid_data = get_time_steps(valid_data, num_steps=time_steps, jump=True)
-    valid_data = torch.tensor(valid_data, dtype=torch.float32)
 
     # 划分训练集和测试集
     X_data = train_data[:, :, :-len(label_names)]
     Y_data = train_data[:, :, -len(label_names):]
-
+    del train_data
     (x_train, t_train), (x_test, t_test) = split_train_test(X_data, Y_data, 2023, 0.8)
-
+    del X_data, Y_data
+    # 训练集得到datasets
     train_datasets = TensorDataset(torch.tensor(x_train, dtype=torch.float32),
                                    torch.tensor(t_train, dtype=torch.float32))
     test_datasets = TensorDataset(torch.tensor(x_test, dtype=torch.float32),
@@ -60,13 +54,19 @@ def load_time_data(steps: list, batch_size=32, time_steps=15, jump=False):
 
     train_iter = DataLoader(train_datasets, batch_size=batch_size, shuffle=True)
     test_iter = DataLoader(test_datasets, batch_size=batch_size, shuffle=True)
-
+    print(next(iter(train_iter))[0].shape)
     with open("train_data.pkl", "wb") as f:
         pickle.dump((train_iter, test_iter), f)
+    del train_datasets, test_datasets, train_iter, test_iter
+
+    # 测试集得到时间步
+    valid_data = data.drop(columns=label_names)[n_train:]  # 将label列删除，生成验证集
+    valid_data = np.array(valid_data)
+    valid_data = get_time_steps(valid_data, num_steps=time_steps, jump=True)
+    valid_data = torch.tensor(valid_data, dtype=torch.float32)
     with open("valid_data.pkl", "wb") as f:
         pickle.dump(valid_data, f)
-
-    return train_iter, test_iter, valid_data
+    del valid_data
 
 
 def norm_data(data, colunms: list):
@@ -171,6 +171,7 @@ def load_linear_data(steps: list, batch_size=32, time_steps=15, jump=False):
                                    torch.tensor(t_test, dtype=torch.float32))
 
     train_iter = DataLoader(train_datasets, batch_size=batch_size, shuffle=True)
+    print(next(iter(train_iter))[0].shape)
     test_iter = DataLoader(test_datasets, batch_size=batch_size, shuffle=True)
 
     with open("train_data.pkl", "wb") as f:
@@ -183,6 +184,6 @@ def load_linear_data(steps: list, batch_size=32, time_steps=15, jump=False):
 
 # steps = [15, 30, 60, 240, 1440]
 steps = [15, 30, 60]
-train_iter, test_iter, valid_data = load_time_data(steps=steps, batch_size=256, time_steps=60)
-print(next(iter(train_iter))[0].shape)
+load_time_data(steps=steps, batch_size=128, time_steps=60, jump=False)
+
 
