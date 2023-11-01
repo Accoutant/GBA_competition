@@ -105,22 +105,30 @@ def create_lable(data, steps: list, n_train):
     return data, label_names
 
 
-def get_time_steps(data, num_steps, jump=True):
+def get_time_steps(data, num_steps, jump: (bool, int)):
     """
     对时间序列按时间步生成一条条数据
     :param data: 未分割的时间序列数据,np.array数组
     :param num_steps: 时间步
-    :param jump: 是否间隔排序
+    :param jump: 是否间隔排序, bool, int
     :return: 未打乱的data, np.array数组
     """
-    if jump:
+    if jump == True:
         steps = len(data) // num_steps
         data = [data[i*num_steps:(i+1)*num_steps] for i in range(steps)]
-        data = np.array(data)
+    elif type(jump) == int:
+        n = data.shape[0]
+        if n % jump == 0:
+            data = [data[i: i + num_steps] for i in range(0, n - num_steps + jump, jump)]
+        else:
+            data = [data[i: i + num_steps] for i in range(0, n - num_steps, jump)]
+        print("number %d has been cut as %d" % (n, len(data)))
     else:
         n = data.shape[0]
         data = [data[i:i+num_steps] for i in range(n-num_steps+1)]
         data = np.array(data)
+        print("number %d has been cut as %d" % (n, len(data)))
+    data = np.array(data)
     return data
 
 
@@ -184,6 +192,5 @@ def load_linear_data(steps: list, batch_size=32, time_steps=15, jump=False):
 
 # steps = [15, 30, 60, 240, 1440]
 steps = [15, 30, 60]
-load_time_data(steps=steps, batch_size=128, time_steps=60, jump=False)
-
+load_time_data(steps=steps, batch_size=128, time_steps=60, jump=2)
 
