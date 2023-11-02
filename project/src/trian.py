@@ -13,7 +13,7 @@ with open("train_data.pkl", "rb") as f:
     train_iter, test_iter = pickle.load(f)
 
 # net = linear_net
-# net = LSTMWithLinear(27, 64, 32, 1, 3)
+# net = LSTMWithLinear(27, 20, 32, 3, 3, dropout=0.1)
 # net = SelfAttention(27, num_heads=3, dropout=0.2, key_size=27, value_size=27, output_features=3, hidden_size=32)
 net = Bert(27, 20, 4, 0.1, 3, 4)
 loss_fn = nn.MSELoss()

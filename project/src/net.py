@@ -11,33 +11,19 @@ linear_net = nn.Sequential(nn.Linear(26, 100),
 
 
 class LSTMWithLinear(nn.Module):
-    def __init__(self, input_size, hidden_size1, hidden_size2, num_layers, out_features, dropout=0):
+    def __init__(self, input_size, hidden_size1, hidden_size2, num_layers, out_features, dropout=0, bidirectional=False):
         super().__init__()
-        self.linear = nn.Sequential(nn.Linear(input_size, hidden_size1), nn.ReLU())
-        self.lstms = nn.ModuleList()
-        for i in range(out_features):
-            self.lstms.add_module("lstm"+str(i), nn.LSTM(input_size=hidden_size1, hidden_size=hidden_size2,
-                                                         num_layers=num_layers, batch_first=True, dropout=dropout))
-        self.affine = nn.Linear(hidden_size2, 1)
-        self.affines = nn.ModuleList()
-        for i in range(out_features):
-            self.affines.add_module("affine"+str(i), self.affine)
-
-        # 将affine层初始化参数
-        for affine in self.affines:
-            affine.apply(self.init_weight)
+        self.linear1 = nn.Sequential(nn.Linear(input_size, hidden_size1), nn.ReLU())
+        self.lstm = nn.LSTM(input_size=hidden_size1, hidden_size=hidden_size2, num_layers=num_layers,
+                            batch_first=True, dropout=dropout, bidirectional=bidirectional)
+        self.linear2 = nn.Linear(hidden_size2, out_features)
 
     def forward(self, X):
-        X = self.linear(X)
-        lstm_outputs = []
-        for lstm in self.lstms:
-            X1, _ = lstm(X)
-            lstm_outputs.append(X1)
-        affine_outputs = []
-        for X1, affine in zip(lstm_outputs, self.affines):
-            X2 = affine(X1)
-            affine_outputs.append(X2)
-        return torch.cat(affine_outputs, dim=-1)
+        # X.shape: batch_size, num_steps, input_size
+        X = self.linear1(X)
+        Y, _ = self.lstm(X)
+        output= self.linear2(Y)
+        return output
 
     def init_weight(self, m):
         if type(m) == nn.Linear:
@@ -77,7 +63,7 @@ class Bertblock(nn.Module):
         self.attention = nn.MultiheadAttention(embed_dim=hidden_size, num_heads=num_heads, dropout=dropout, kdim=hidden_size, vdim=hidden_size)
         self.addnorm1 = d2l.AddNorm(hidden_size, dropout)
         self.feed = nn.Linear(hidden_size, hidden_size)
-        self.addnorm2 = d2l.AddNorm(hidden_size, dropout)
+        self.addnorm2 = AddNorm(60, dropout=dropout)
 
     def forward(self, X):
         # X.shape: batch_size, num_steps, num_features
@@ -106,3 +92,14 @@ class Bert(nn.Module):
         return X3
 
 
+class AddNorm(nn.Module):
+    """Residual connection followed by layer normalization.
+
+    Defined in :numref:`sec_transformer`"""
+    def __init__(self, normalized_shape, dropout, **kwargs):
+        super(AddNorm, self).__init__(**kwargs)
+        self.dropout = nn.Dropout(dropout)
+        self.ln = nn.BatchNorm1d(normalized_shape)
+
+    def forward(self, X, Y):
+        return self.ln(self.dropout(Y) + X)
