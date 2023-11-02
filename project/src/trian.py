@@ -15,17 +15,19 @@ with open("train_data.pkl", "rb") as f:
 # net = linear_net
 # net = LSTMWithLinear(27, 64, 32, 1, 3)
 # net = SelfAttention(27, num_heads=3, dropout=0.2, key_size=27, value_size=27, output_features=3, hidden_size=32)
-net = Bert(27, 15, 4, 0.1, 3, 4)
+net = Bert(27, 20, 4, 0.1, 3, 4)
 loss_fn = nn.MSELoss()
 lr = 0.01
+new_lr = 0.001
 max_epochs = 10
-optimizer = optim.Adam(net.parameters(), lr=lr)
+optimizer = optim.Adam
 
 
-def trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs, device):
+def trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs, device, lr, new_lr):
     net = net.to(device)
     animator = d2l.Animator(xlabel="epoch", ylabel="loss", legend=['train_loss', "test_loss"])
     for epoch in range(max_epochs):
+        optim = optimizer(net.parameters(), lr=lr)
         metric = d2l.Accumulator(4)
         iter = 1
         for X, Y in train_iter:
@@ -33,10 +35,10 @@ def trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs, device):
             Y = Y.to(device)
             output = net(X).squeeze(-1)
             loss = loss_fn(output, Y).mean()
-            optimizer.zero_grad()
+            optim.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(net.parameters(), 1)
-            optimizer.step()
+            optim.step()
             metric.add(1, loss, 0, 0)
             print('| epoch %d | iter %d | loss %.4f |' % (epoch+1, iter, metric[1]/metric[0]))
             iter += 1
@@ -49,11 +51,14 @@ def trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs, device):
                 loss_test = loss_fn(output_test, Y_test)
                 metric.add(0, 0, 1, loss_test)
 
-        print('acc : %.4f' % (metric[3]/metric[2]))
+        print('acc : %.4f, lr: %.4f' % (metric[3]/metric[2], lr))
         animator.add(epoch+1, [metric[1]/metric[0], metric[3]/metric[2]])
+
+        if metric[3]/metric[2] < 4.5:
+            lr = new_lr
     torch.save(net.state_dict(), "params.pkl")
     plt.savefig(fname="../models/loss.jpg")
 
 
 print("\n", next(iter(train_iter))[0].shape)
-trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs=max_epochs, device=device)
+trainer(net, train_iter, test_iter, loss_fn, optimizer, max_epochs=max_epochs, device=device, lr=lr, new_lr=new_lr)
