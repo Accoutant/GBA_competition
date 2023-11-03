@@ -116,3 +116,28 @@ class BertwithLstm(nn.Module):
         output = self.linear2(lstm_output)
         return output
 
+
+class LstmWithTransformer(nn.Module):
+    def __init__(self, in_features, hidden_size, lstm_layers, tf_layers, dropout, num_heads, out_features):
+        super().__init__()
+        self.lstm = nn.LSTM(input_size=in_features, hidden_size=in_features, num_layers=lstm_layers,
+                            batch_first=True, dropout=dropout)
+        self.linear1 = nn.Linear(2*in_features, hidden_size)
+        self.gelu = nn.GELU()
+        self.position = d2l.PositionalEncoding(num_hiddens=hidden_size, dropout=dropout)
+        self.transformer = nn.Transformer(d_model=hidden_size, nhead=num_heads, num_encoder_layers=tf_layers,
+                                          num_decoder_layers=tf_layers, dim_feedforward=hidden_size, dropout=dropout,
+                                          activation="gelu")
+        self.linear2 = nn.Linear(hidden_size, out_features=out_features)
+
+    def forward(self, X):
+        X1, _ = self.lstm(X)
+        X2 = torch.cat((X, X1), dim=-1)
+        X3 = self.gelu(self.linear1(X2))
+        X3 = self.position(X3)
+        X3 = X3.permute(1, 0, 2)
+        X4 = self.transformer(X3, X3)
+        X4 = X4.permute(1, 0, 2)
+        output = self.linear2(X4)
+        return output
+

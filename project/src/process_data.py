@@ -16,12 +16,23 @@ def load_time_data(steps: list, batch_size=32, time_steps=15, jump=False):
     data.drop(columns=['index', '大气压', '风速', '风向', '平均风速', '平均风向', '阵风速', '阵风向', '降雨量', '辐照度_POA', '无功功率',
                        '累计发电量'], inplace=True)
 
+    # 去除异常值
+    data = handling_outliers(data)
+    # 增加时间特征
     data['time'] = data['时间'].apply(lambda x: pd.Timestamp(x))
     data['月'] = data['time'].apply(lambda x: x.month)
     data['日'] = data['time'].apply(lambda x: x.day)
     data['时'] = data['time'].apply(lambda x: x.hour)
-    data['分'] = data['time'].apply(lambda x: x.minute)
+    # data['分'] = data['time'].apply(lambda x: x.minute)
     data['一天中的第几分钟'] = data['time'].apply(lambda x: x.dayofyear)
+    # 一年中的哪个季度
+    season_dict = {
+        1: 1, 2: 1, 3: 1,
+        4: 2, 5: 2, 6: 2,
+        7: 3, 8: 3, 9: 3,
+        10: 4, 11: 4, 12: 4,
+    }
+    data['季节'] = data['月'].map(season_dict)
 
     data.drop(columns=['时间', '当日发电量', 'time'], inplace=True)
     data: DataFrame
@@ -84,15 +95,13 @@ def split_train_test(x_data, t_data, seed, rate):
     :param rate: 划分比例，eg:0.9代表训练集占0.9
     :return: 返回打乱后的(x_train, t_train), (x_test, t_test)， 均为np.array数组
     """
-    shuffled_indices = np.arange(x_data.shape[0])
+    train_n = round(x_data.shape[0] * rate)
+    x_train, t_train = x_data[:train_n], t_data[:train_n]
+    x_test, t_test = x_data[train_n:], t_data[train_n:]
+    shuffled_indices = np.arange(train_n)
     np.random.seed(seed)
     np.random.shuffle(shuffled_indices)
-    x_data, t_data = x_data[shuffled_indices], t_data[shuffled_indices]
-    idx = int(rate*x_data.shape[0])
-    x_train = x_data[:idx]
-    x_test = x_data[idx:]
-    t_train = t_data[:idx]
-    t_test = t_data[idx:]
+    x_train, t_train = x_train[shuffled_indices], t_train[shuffled_indices]
     return (x_train, t_train), (x_test, t_test)
 
 
@@ -129,6 +138,22 @@ def get_time_steps(data, num_steps, jump: (bool, int)):
         data = np.array(data)
         print("number %d has been cut as %d" % (n, len(data)))
     data = np.array(data)
+    return data
+
+
+def handling_outliers(data):
+    data_zscore = data.copy()
+    cols = data.columns
+    for col in cols:
+        if data[col].dtype != "object":
+            data_col = data[col]
+            z_score = (data_col - data_col.mean()) / (data_col.std() + 1e-5)
+            data_zscore[col] = z_score.abs() > 3
+        else:
+            data_zscore[col] = False
+    data[data_zscore] = np.nan
+    print(data.isnull().sum())
+    data.interpolate(inplace=True)
     return data
 
 
