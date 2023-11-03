@@ -94,3 +94,25 @@ class Bert(nn.Module):
         return X3
 
 
+class BertwithLstm(nn.Module):
+    def __init__(self, in_features, hidden_size, num_heads, dropout,
+                 out_features, bert_layers, lstm_layers, num_steps):
+        super().__init__()
+        self.linear1 = nn.Linear(in_features, hidden_size)
+        self.pos_embedding = d2l.PositionalEncoding(hidden_size, dropout=dropout, max_len=num_steps)
+        self.bert = nn.Sequential()
+        for i in range(bert_layers):
+            self.bert.add_module("bertblock" + str(i), Bertblock(hidden_size, num_heads, dropout))
+        self.lstm = nn.LSTM(input_size=hidden_size, hidden_size=hidden_size, num_layers=lstm_layers, batch_first=True,
+                            dropout=dropout)
+        self.linear2 = nn.Linear(hidden_size, out_features)
+
+    def forward(self, X):
+        # X.shape: batch_size, num_steps, in_features
+        X = self.linear1(X)
+        X = self.pos_embedding(X)
+        bert_output = self.bert(X)
+        lstm_output, _ = self.lstm(bert_output)
+        output = self.linear2(lstm_output)
+        return output
+
