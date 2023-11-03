@@ -63,7 +63,7 @@ class Bertblock(nn.Module):
         self.attention = nn.MultiheadAttention(embed_dim=hidden_size, num_heads=num_heads, dropout=dropout, kdim=hidden_size, vdim=hidden_size)
         self.addnorm1 = d2l.AddNorm(hidden_size, dropout)
         self.feed = nn.Linear(hidden_size, hidden_size)
-        self.addnorm2 = AddNorm(60, dropout=dropout)
+        self.addnorm2 = d2l.AddNorm(hidden_size, dropout)
 
     def forward(self, X):
         # X.shape: batch_size, num_steps, num_features
@@ -77,29 +77,20 @@ class Bertblock(nn.Module):
 
 
 class Bert(nn.Module):
-    def __init__(self, in_features, hidden_size, num_heads, dropout, out_features, num_layers):
+    def __init__(self, in_features, hidden_size, num_heads, dropout, out_features, num_layers, num_steps):
         super().__init__()
         self.linear1 = nn.Linear(in_features, hidden_size)
         self.blocks = nn.Sequential()
         for i in range(num_layers):
             self.blocks.add_module("bertblock"+str(i), Bertblock(hidden_size, num_heads, dropout))
         self.linear2 = nn.Linear(hidden_size, out_features)
+        self.pos_embedding = d2l.PositionalEncoding(hidden_size, dropout=dropout, max_len=num_steps)
 
     def forward(self, X):
         X1 = self.linear1(X)
+        X1 = self.pos_embedding(X1)
         X2 = self.blocks(X1)
         X3 = self.linear2(X2)
         return X3
 
 
-class AddNorm(nn.Module):
-    """Residual connection followed by layer normalization.
-
-    Defined in :numref:`sec_transformer`"""
-    def __init__(self, normalized_shape, dropout, **kwargs):
-        super(AddNorm, self).__init__(**kwargs)
-        self.dropout = nn.Dropout(dropout)
-        self.ln = nn.BatchNorm1d(normalized_shape)
-
-    def forward(self, X, Y):
-        return self.ln(self.dropout(Y) + X)
