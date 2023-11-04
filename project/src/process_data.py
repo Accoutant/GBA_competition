@@ -11,6 +11,7 @@ def load_time_data(steps: list, batch_size=32, time_steps=15, jump=False):
     n_train = len(data)
     pre_data = pd.read_csv('../../data/202309221011205597/dev_data.csv')
     data = pd.concat([data, pre_data], axis=0)    # 将预测数据和训练数据合并，从而进行归一化
+    del pre_data
     data.fillna(0, inplace=True)
     data.reset_index(inplace=True)
     data.drop(columns=['index', '大气压', '风速', '风向', '平均风速', '平均风向', '阵风速', '阵风向', '降雨量', '辐照度_POA', '无功功率',
