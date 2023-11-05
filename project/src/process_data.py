@@ -217,7 +217,7 @@ def load_ml_data(steps: list, batch_size=32, time_steps=15, jump=False):
 
     (x_train, t_train), (x_test, t_test) = split_train_test(X_data, Y_data, 2023, 0.8)
 
-    with open("train_data.pkl", "wb") as f:
+    with open("train_data_ml.pkl", "wb") as f:
         pickle.dump(((x_train, t_train), (x_test, t_test), valid_data), f)
 
     return (x_train, t_train), (x_test, t_test), valid_data

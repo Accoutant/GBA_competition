@@ -59,7 +59,7 @@ def use_pca():
 
 
 def use_xgboost():
-    with open("train_data.pkl", "rb") as f:
+    with open("train_data_ml.pkl", "rb") as f:
         (x_train, t_train), (x_test, t_test), valid_data = pickle.load(f)
     dtrain = xgb.DMatrix(x_train, label=t_train)
     dtest = xgb.DMatrix(x_test, label=t_test)
