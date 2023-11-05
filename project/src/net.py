@@ -77,14 +77,14 @@ class Bertblock(nn.Module):
 
 
 class Bert(nn.Module):
-    def __init__(self, in_features, hidden_size, num_heads, dropout, out_features, num_layers, num_steps):
+    def __init__(self, in_features, hidden_size, num_heads, dropout, out_features, num_layers):
         super().__init__()
         self.linear1 = nn.Linear(in_features, hidden_size)
         self.blocks = nn.Sequential()
         for i in range(num_layers):
             self.blocks.add_module("bertblock"+str(i), Bertblock(hidden_size, num_heads, dropout))
         self.linear2 = nn.Linear(hidden_size, out_features)
-        self.pos_embedding = d2l.PositionalEncoding(hidden_size, dropout=dropout, max_len=num_steps)
+        self.pos_embedding = d2l.PositionalEncoding(hidden_size, dropout=dropout)
 
     def forward(self, X):
         X1 = self.linear1(X)
