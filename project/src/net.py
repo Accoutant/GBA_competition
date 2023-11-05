@@ -1,11 +1,6 @@
 from torch import nn
 import torch
 from d2l import torch as d2l
-import xgboost as xgb
-from sklearn.metrics import mean_squared_error
-import pandas as pd
-import numpy as np
-import pickle
 
 
 linear_net = nn.Sequential(nn.Linear(26, 100),
