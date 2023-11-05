@@ -83,6 +83,7 @@ def use_xgboost():
     predict = pd.DataFrame(predict, columns=['15分', '30分', '60分'])
     with open("predict.pkl", "wb") as f:
         pickle.dump(predict, f)
+    bst.dump_model('bst.text')
 
 # labels = ["15分", "30分", "60分"]
 # predict = use_svm(labels)
