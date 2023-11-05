@@ -1,6 +1,11 @@
 from torch import nn
 import torch
 from d2l import torch as d2l
+import xgboost as xgb
+from sklearn.metrics import mean_squared_error
+import pandas as pd
+import numpy as np
+import pickle
 
 
 linear_net = nn.Sequential(nn.Linear(26, 100),
@@ -141,3 +146,28 @@ class LstmWithTransformer(nn.Module):
         output = self.linear2(X4)
         return output
 
+def use_xgboost():
+    with open("train_data.pkl", "rb") as f:
+        (x_train, t_train), (x_test, t_test), valid_data = pickle.load(f)
+    dtrain = xgb.DMatrix(x_train, label=t_train)
+    dtest = xgb.DMatrix(x_test, label=t_test)
+    params = {
+        'max_depth': 7,  # 每棵决策树的最大深度
+        'eta': 0.1,  # 学习率
+        'subsample': 0.7,  # 每次随机选择的样本比例
+        'colsample_bytree': 0.7,  # 每棵决策树随机选择的特征比例
+        'objective': 'reg:squarederror',  # 损失函数
+        'eval_metric': 'rmse',  # 评价指标
+        'silent': 1  # 是否输出日志信息
+    }
+    # 训练 XGBoost 模型
+    num_round = 100  # 决策树的数量
+    bst = xgb.train(params, dtrain, num_round)
+    # 使用测试集进行预测
+    t_pred = bst.predict(dtest)
+    print('RMSE:', mean_squared_error(t_test, t_pred, squared=False))
+    predict = bst.predict(xgb.DMatrix(valid_data))
+    predict = pd.DataFrame(predict, columns=['15分', '30分', '60分', "240分", "1440分"])
+    with open("predict_ml.pkl", "wb") as f:
+        pickle.dump(predict, f)
+    bst.dump_model('bst.text')
