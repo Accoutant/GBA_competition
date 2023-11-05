@@ -153,70 +153,114 @@ def handling_outliers(data):
         else:
             data_zscore[col] = False
     data[data_zscore] = np.nan
-    print(data.isnull().sum())
+    print("-"*50, "\nnan count: \n", data.isnull().sum(), "\n", "-"*50)
     data.interpolate(inplace=True)
     return data
 
 
-def load_linear_data(steps: list, batch_size=32, time_steps=15, jump=False):
+def get_k_fold_data(k, i, x, y):
+    """
+    获取交叉验证数据(不进行打乱)
+    :param k: 折数
+    :param i: 选中的验证折数
+    :param x: np.array数组
+    :param y: np.array数组
+    :return:(x_train, y_train), (x_test, y_test), np.array数组
+    """
+    n_train = x.shape[0]
+    num_items = n_train // k
+    idx = [num_items * j for j in range(k)]
+    if i != k:
+        x_test = x[idx[i - 1]:idx[i]]
+        y_test = y[idx[i - 1]:idx[i]]
+        x_train = np.concatenate((x[:idx[i - 1]], x[idx[i]:]), axis=0)
+        y_train = np.concatenate((y[:idx[i - 1]], y[idx[i]:]), axis=0)
+    else:
+        x_test = x[idx[i - 1]:]
+        y_test = y[idx[i - 1]:]
+        x_train = x[:idx[i - 1]]
+        y_train = y[:idx[i - 1]]
+    return (x_train, y_train), (x_test, y_test)
+
+
+def disrupting_data(data, seed):
+    """
+    打乱数据
+    :param data:未打乱的数据
+    :param seed: 种子
+    :return: 返回打乱后的data
+    """
+    shuffled_indices = np.arange(data.shape[0])
+    np.random.seed(seed)
+    np.random.shuffle(shuffled_indices)
+    data = data[shuffled_indices]
+    return data
+
+
+def load_k_fold_data(steps, time_steps, jump):
     data = pd.read_csv('../../data/202309221011205597/train_data.csv')
     n_train = len(data)
     pre_data = pd.read_csv('../../data/202309221011205597/dev_data.csv')
-    data = pd.concat([data, pre_data], axis=0)    # 将预测数据和训练数据合并，从而进行归一化
+    data = pd.concat([data, pre_data], axis=0)  # 将预测数据和训练数据合并，从而进行归一化
+    del pre_data
     data.fillna(0, inplace=True)
     data.reset_index(inplace=True)
-    data.drop(columns=['index', '大气压', '风速', '风向', '平均风速', '平均风向', '阵风速', '阵风向', '降雨量', '辐照度_POA', '无功功率',
-                       '累计发电量'], inplace=True)
+    data.drop(
+        columns=['index', '大气压', '风速', '风向', '平均风速', '平均风向', '阵风速', '阵风向', '降雨量', '辐照度_POA',
+                 '无功功率',
+                 '累计发电量'], inplace=True)
 
+    # 去除异常值
+    data = handling_outliers(data)
+    # 增加时间特征
     data['time'] = data['时间'].apply(lambda x: pd.Timestamp(x))
     data['月'] = data['time'].apply(lambda x: x.month)
     data['日'] = data['time'].apply(lambda x: x.day)
     data['时'] = data['time'].apply(lambda x: x.hour)
-    data['分'] = data['time'].apply(lambda x: x.minute)
+    # data['分'] = data['time'].apply(lambda x: x.minute)
+    data['一天中的第几分钟'] = data['time'].apply(lambda x: x.dayofyear)
+    # 一年中的哪个季度
+    season_dict = {
+        1: 1, 2: 1, 3: 1,
+        4: 2, 5: 2, 6: 2,
+        7: 3, 8: 3, 9: 3,
+        10: 4, 11: 4, 12: 4,
+    }
+    data['季节'] = data['月'].map(season_dict)
 
     data.drop(columns=['时间', '当日发电量', 'time'], inplace=True)
-    data: DataFrame
 
-    data, label_names = create_lable(data, steps, n_train)    # 创建label
+    data, label_names = create_lable(data, steps, n_train)  # 创建label
     max_step = max(steps)
-    data.drop(columns=['有功功率'], inplace=True)    # 创建完后把有功功率删除
+    data.drop(columns=['有功功率'], inplace=True)  # 创建完后把有功功率删除
 
     col_list = data.columns.tolist()
     for label_name in label_names:
-        col_list.remove(label_name)       # 不对label列进行归一化
-    data = norm_data(data, col_list)    # 对其他列进行归一化
+        col_list.remove(label_name)  # 不对label列进行归一化
+    data = norm_data(data, col_list)  # 对其他列进行归一化
 
-    # 划分训练集和验证集
+    # 训练集得到时间步
     train_data = data[:n_train - max_step]
-    valid_data = data.drop(columns=label_names)[n_train:]   # 将label列删除，生成验证集
-
     train_data = np.array(train_data)
-    valid_data = torch.tensor(np.array(valid_data), dtype=torch.float32)
-
+    train_data = get_time_steps(train_data, num_steps=time_steps, jump=jump)
+    train_data = disrupting_data(train_data, seed=2023)   # 打乱数据
     # 划分训练集和测试集
-    X_data = train_data[:, :-len(label_names)]
-    Y_data = train_data[:, -len(label_names):]
-
-    (x_train, t_train), (x_test, t_test) = split_train_test(X_data, Y_data, 2023, 0.8)
-
-    train_datasets = TensorDataset(torch.tensor(x_train, dtype=torch.float32),
-                                   torch.tensor(t_train, dtype=torch.float32))
-    test_datasets = TensorDataset(torch.tensor(x_test, dtype=torch.float32),
-                                   torch.tensor(t_test, dtype=torch.float32))
-
-    train_iter = DataLoader(train_datasets, batch_size=batch_size, shuffle=True)
-    print(next(iter(train_iter))[0].shape)
-    test_iter = DataLoader(test_datasets, batch_size=batch_size, shuffle=True)
+    X_data = train_data[:, :, :-len(label_names)]
+    Y_data = train_data[:, :, -len(label_names):]
 
     with open("train_data.pkl", "wb") as f:
-        pickle.dump((train_iter, test_iter), f)
+        pickle.dump((X_data, Y_data), f)
+
+    valid_data = data.drop(columns=label_names)[n_train:]  # 将label列删除，生成验证集
+    valid_data = np.array(valid_data)
+    valid_data = get_time_steps(valid_data, num_steps=time_steps, jump=True)
+    valid_data = torch.tensor(valid_data, dtype=torch.float32)
     with open("valid_data.pkl", "wb") as f:
         pickle.dump(valid_data, f)
 
-    return train_iter, test_iter, valid_data
 
-
-# steps = [15, 30, 60, 240, 1440]
-steps = [15, 30, 60]
-load_time_data(steps=steps, batch_size=128, time_steps=60, jump=False)
-
+if __name__ == "__main__":
+    # steps = [15, 30, 60, 240, 1440]
+    steps = [15, 30, 60]
+    # load_time_data(steps=steps, batch_size=128, time_steps=60, jump=False)
+    load_k_fold_data(steps, time_steps=60, jump=False)
