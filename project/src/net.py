@@ -64,7 +64,7 @@ def use_xgboost():
     dtrain = xgb.DMatrix(x_train, label=t_train)
     dtest = xgb.DMatrix(x_test, label=t_test)
     params = {
-        'max_depth': 4,  # 每棵决策树的最大深度
+        'max_depth': 6,  # 每棵决策树的最大深度
         'eta': 0.1,  # 学习率
         'subsample': 0.7,  # 每次随机选择的样本比例
         'colsample_bytree': 0.7,  # 每棵决策树随机选择的特征比例
