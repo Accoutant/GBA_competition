@@ -1,5 +1,6 @@
 from torch import nn, optim
-from net import linear_net, LSTMWithLinear, SelfAttention, Bertblock, Bert, BertwithLstm, LstmWithTransformer
+from net import (linear_net, LSTMWithLinear, SelfAttention, Bertblock, Bert,
+                 BertwithLstm, LstmWithTransformer, BERT_compel_LSTM)
 import torch
 from d2l import torch as d2l
 import matplotlib.pyplot as plt
@@ -15,13 +16,14 @@ with open("train_data.pkl", "rb") as f:
 # net = linear_net
 # net = LSTMWithLinear(27, 20, 32, 3, 3, dropout=0.1)
 # net = SelfAttention(27, num_heads=3, dropout=0.2, key_size=27, value_size=27, output_features=3, hidden_size=32)
-net = Bert(in_features=27, hidden_size=20, num_heads=4, dropout=0, out_features=3, num_layers=3)
+# net = Bert(in_features=27, hidden_size=20, num_heads=4, dropout=0, out_features=3, num_layers=3)
 # net = BertwithLstm(in_features=27, hidden_size=20, num_heads=4, dropout=0, out_features=3, bert_layers=1, lstm_layers=1, num_steps=60)
 # net = LstmWithTransformer(in_features=27, hidden_size=20, lstm_layers=2, tf_layers=1, dropout=0, num_heads=4, out_features=3)
+net = BERT_compel_LSTM(in_features=27, hidden_size=20, num_heads=4, dropout=0, out_features=3, bert_layers=2, lstm_layers=2)
 loss_fn = nn.MSELoss()
 lr = 0.01
 new_lr = 0.01
-max_epochs = 15
+max_epochs = 10
 optimizer = optim.Adam
 
 

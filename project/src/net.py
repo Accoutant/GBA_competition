@@ -59,9 +59,6 @@ class SelfAttention(nn.Module):
         return output
 
 
-# net = SelfAttention(27, 3, dropout=0.1, key_size=27, value_size=27, output_features=3)
-
-
 class Bertblock(nn.Module):
     def __init__(self, hidden_size, num_heads, dropout):
         super().__init__()
@@ -146,28 +143,28 @@ class LstmWithTransformer(nn.Module):
         output = self.linear2(X4)
         return output
 
-def use_xgboost():
-    with open("train_data.pkl", "rb") as f:
-        (x_train, t_train), (x_test, t_test), valid_data = pickle.load(f)
-    dtrain = xgb.DMatrix(x_train, label=t_train)
-    dtest = xgb.DMatrix(x_test, label=t_test)
-    params = {
-        'max_depth': 7,  # 每棵决策树的最大深度
-        'eta': 0.1,  # 学习率
-        'subsample': 0.7,  # 每次随机选择的样本比例
-        'colsample_bytree': 0.7,  # 每棵决策树随机选择的特征比例
-        'objective': 'reg:squarederror',  # 损失函数
-        'eval_metric': 'rmse',  # 评价指标
-        'silent': 1  # 是否输出日志信息
-    }
-    # 训练 XGBoost 模型
-    num_round = 100  # 决策树的数量
-    bst = xgb.train(params, dtrain, num_round)
-    # 使用测试集进行预测
-    t_pred = bst.predict(dtest)
-    print('RMSE:', mean_squared_error(t_test, t_pred, squared=False))
-    predict = bst.predict(xgb.DMatrix(valid_data))
-    predict = pd.DataFrame(predict, columns=['15分', '30分', '60分', "240分", "1440分"])
-    with open("predict_ml.pkl", "wb") as f:
-        pickle.dump(predict, f)
-    bst.dump_model('bst.text')
+
+class BERT_compel_LSTM(nn.Module):
+    def __init__(self, in_features, hidden_size, num_heads, dropout, out_features, bert_layers, lstm_layers):
+        super().__init__()
+        self.linear = nn.Linear(in_features, hidden_size)
+        self.pos_embedding = d2l.PositionalEncoding(hidden_size, dropout=dropout)
+        self.bert = nn.Sequential()
+        for i in range(bert_layers):
+            self.bert.add_module("bertblock" + str(i), Bertblock(hidden_size, num_heads, dropout))
+        self.lstm = nn.Sequential(nn.Linear(in_features, hidden_size),
+                                  nn.LSTM(input_size=hidden_size, hidden_size=hidden_size, num_layers=lstm_layers,
+                                          batch_first=True, dropout=dropout))
+        self.cat = nn.Linear(hidden_size, out_features)
+
+    def forward(self, X):
+        # BERT
+        X1 = self.linear(X)
+        X1 = self.pos_embedding(X1)
+        X2 = self.bert(X1)
+        # LSTM
+        Y1, _ = self.lstm(X)
+        # cat
+        Z = X2 + Y1
+        output = self.cat(Z)
+        return output
